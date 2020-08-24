@@ -1,0 +1,28 @@
+body {
+  padding: 50px;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+
+a {
+  color: #00B7FF;
+}
+
+img.preview {
+  border-radius: 50%;
+  margin: 16px;
+}
+
+.dark {
+  background: #202124;
+  display: inline-block;
+}
+
+.large {
+  width: 224px;
+  height: 224px;
+}
+
+.small {
+  width: 75px;
+  height: 75px;
+}

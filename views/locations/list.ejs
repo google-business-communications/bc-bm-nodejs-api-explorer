@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>List of Locations</title>
+    <%- include('../header.ejs'); %>
+  </head>
+  <body>
+    <div class="container">
+      <h1>List of Locations</h1>
+
+      <%
+        var rows = (locations != undefined ? locations.length : 0);
+      %>
+
+      <div class="row mb-2">
+        <div class="col">
+          <a href="/">← Back to brands</a>
+        </div>
+        <div class="col text-right">
+          <a href="/locations/create?brandId=<%= brandId %>">+ Create location</a>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="col">
+          <table width="100%" border="1" cellpadding="10">
+            <% if (rows == 0) { %>
+              <tr><td>No locations registered for the brand.</td></tr>
+            <% } else { %>
+              <tr>
+                <th>ID</th>
+                <th>Place ID</th>
+              </tr>
+
+              <% for (var i = 0; i < rows; i++) { %>
+                <tr>
+                  <td>
+                    <a href="/locations/edit?locationId=<%= encodeURI(locations[i].name); %>&brandId=<%= brandId %>">
+                      <%= locations[i].name.substr(locations[i].name.lastIndexOf('/') + 1); %>
+                    </a>
+                  </td>
+                  <td><%= locations[i].placeId; %></td>
+                </tr>
+              <% } %>
+            <% } %>
+          </table>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,20 @@
+<div class="row">
+	<div class="col">
+		<div class="form-group">
+			<label>Suggestion</label>
+			<input class="form-control" placeholder="Suggestion text" type="text" name="<%= controlName %>.text" maxlength="35" value="<%= starter.suggestion.reply !== undefined ? starter.suggestion.reply.text : starter.suggestion.action.text; %>">
+		</div>
+	</div>
+	<div class="col">
+		<div class="form-group">
+			<label>Postback data</label>
+			<input class="form-control" placeholder="Postback value" type="text" name="<%= controlName %>.postbackData" maxlength="35" value="<%= starter.suggestion.reply !== undefined ? starter.suggestion.reply.postbackData : starter.suggestion.action.postbackData; %>">
+		</div>
+	</div>
+	<div class="col">
+		<div class="form-group">
+			<label>URL</label>
+			<input class="form-control" placeholder="Optional" type="text" name="<%= controlName %>.url" maxlength="35" value="<%= starter.suggestion.action !== undefined ? starter.suggestion.action.openUrlAction.url : ''; %>">
+		</div>
+	</div>
+</div>

@@ -1,0 +1,92 @@
+<%
+	var days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+	Number.prototype.pad = function(size) {
+	  var s = String(this);
+	  while (s.length < (size || 2)) {
+	  	s = "0" + s;
+	  }
+
+	  return s;
+	}
+%>
+
+<div class="hours-container">
+	<% if (showRemove) { %>
+		<p>Additional primary availability: <a href="#" class="availability-remove">(remove)</a></p>
+	<% } %>
+	<div class="row">
+		<div class="col">
+			<div class="form-group">
+				<label>Start Day</label>
+				<select class="form-control" name="<%= controlName %>.startDay">
+					<% for(var i = 0; i < days.length; i++) { %>
+						<option <%= hour.startDay == days[i].toUpperCase() ? 'selected' : '' %> value="<%= days[i].toUpperCase(); %>"><%= days[i]; %></option>
+					<% } %>
+				</select>
+			</div>
+		</div>
+		<div class="col">
+			<div class="form-group">
+				<label>End Day</label>
+				<select class="form-control" name="<%= controlName %>.endDay">
+					<% for(var i = 0; i < days.length; i++) { %>
+						<option <%= hour.endDay == days[i].toUpperCase() ? 'selected' : '' %> value="<%= days[i].toUpperCase(); %>"><%= days[i]; %></option>
+					<% } %>
+				</select>
+			</div>
+		</div>
+	</div>
+
+	<div class="row">
+		<div class="col-3">
+			<div class="form-group">
+				<label>Start Time (hour)</label>
+				<select class="form-control" name="<%= controlName %>.startTime.hours">
+					<% for(var i = 0; i < 24; i++) { %>
+						<option <%= hour.startTime != undefined && hour.startTime.hours == i ? 'selected' : '' %> value="<%= i %>"><%= i %></option>
+					<% } %>
+				</select>
+			</div>
+		</div>
+		<div class="col-3">
+			<div class="form-group">
+				<label>Start time (minutes)</label>
+				<select class="form-control" name="<%= controlName %>.startTime.minutes">
+					<% for(var i = 0; i < 60; i++) { %>
+						<option <%= hour.startTime != undefined && hour.startTime.minutes == i ? 'selected' : '' %> value="<%= i %>"><%= (i).pad(2) %></option>
+					<% } %>
+				</select>
+			</div>
+		</div>
+		<div class="col-3">
+			<div class="form-group">
+				<label>End Time<br/>(hour)</label>
+				<select class="form-control" name="<%= controlName %>.endTime.hours">
+					<% for(var i = 0; i < 24; i++) { %>
+						<option <%= hour.endTime.hours == i ? 'selected' : '' %> value="<%= i %>"><%= i %></option>
+					<% } %>
+				</select>
+			</div>
+		</div>
+		<div class="col-3">
+			<div class="form-group">
+				<label>End time (minutes)</label>
+				<select class="form-control" name="<%= controlName %>.endTime.minutes">
+					<% for(var i = 0; i < 60; i++) { %>
+						<option <%= hour.endTime.minutes == i ? 'selected' : '' %> value="<%= i %>"><%= (i).pad(2) %></option>
+					<% } %>
+				</select>
+			</div>
+		</div>
+	</div>
+
+	<div class="form-group">
+		<label>Timezone</label>
+		<select class="form-control" name="<%= controlName %>.timezone">
+			<% for(var i = 0; i < timezones.length; i++) { %>
+				<option <%= hour.timeZone == timezones[i] ? 'selected' : '' %> value="<%= timezones[i] %>"><%= timezones[i] %></option>
+			<% } %>
+		</select>
+	</div>
+</div>

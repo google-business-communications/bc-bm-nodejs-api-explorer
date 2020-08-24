@@ -1,0 +1,42 @@
+<div class="locale-group">
+  <% if(showRemove) { %>
+    <p>Additional locale: <a href="#" class="locale-remove">(remove)</a></p>
+  <% } %>
+  <div class="form-group">
+    <label>Locale</label>
+    <input class="form-control" required placeholder="Locale value (e.g. en)" value="<%= locale; %>" type="text" name="locale">
+  </div>
+
+  <div class="form-group">
+    <label>Welcome message</label>
+    <textarea class="form-control" required placeholder="" name="welcomeMessage"><%= settings.welcomeMessage.text; %></textarea>
+  </div>
+
+  <div class="form-group">
+    <label>Offline message</label>
+    <textarea class="form-control" placeholder="" name="offlineMessage"><%= settings.offlineMessage.text != undefined ? settings.offlineMessage.text : ''; %></textarea>
+  </div>
+
+  <div class="form-group">
+    <label>Privacy policy</label>
+    <input class="form-control" required placeholder="http://" value="<%= settings.privacyPolicy.url != undefined ? settings.privacyPolicy.url : ''; %>" type="text" name="privacyPolicy">
+  </div>
+
+  <div class="form-group">
+    <p class="font-weight-bold">Conversational starters: </p>
+      <div>
+        <%
+          var starters = [];
+          var default_suggestion = { suggestion: { reply: { text: '', postbackData: '' } } };
+          if(settings.conversationStarters != undefined) {
+            starters = settings.conversationStarters;
+          }
+        %>
+        <% for(var i = 0; i < 5; i++) { %>
+          <%- include('../components/conversational_starter.ejs', {
+                controlName: 'conversationalStarter', starter: i < starters.length ? starters[i] : default_suggestion }); %>
+        <% } %>
+      </div>
+  </div>
+</div>
+

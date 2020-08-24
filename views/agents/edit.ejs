@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>
+      <%= title %>
+    </title>
+    <%- include('../header.ejs'); %>
+
+    <script type="text/javascript">
+      $(document).ready(function() {
+        $('#additional-interactions-remove').click(function(e) {
+          e.preventDefault();
+
+          $('#additional-interactions').remove();
+        });
+
+        $("#availability-add").click(function(e) {
+          e.preventDefault();
+
+          var $el1 = $("#original-availability").find(".hours-container:first").clone();
+          $($el1).prepend('<p>Additional primary availability: <a href="#" class="availability-remove">(remove)</a></p>');
+
+          $("#additional-availability").append($el1);
+        });
+
+        $(document.body).on("click", ".availability-remove", function(e) {
+          e.preventDefault();
+
+          $(this).parent().parent().remove();
+        });
+
+        $(document.body).on("click", ".locale-remove", function(e) {
+          e.preventDefault();
+
+          $(this).parent().parent().remove();
+        });
+
+        $("#locale-add").click(function(e) {
+          e.preventDefault();
+
+          var $el1 = $("#original-locale").find(".locale-group:first").clone();
+
+          $($el1).prepend('<p>Additional locale: <a href="#" class="locale-remove">(remove)</a></p>');
+
+          $("#additional-locales").append($el1);
+        });
+
+        const inputEl = $('#url-input');
+        const imgEl1 = $('#preview-1');
+        const imgEl2 = $('#preview-2');
+
+        inputEl.on("input", function(){
+          const val = inputEl.val() || 'https://www.gstatic.com/rbmconsole/images/default_logo.png';
+
+          imgEl1.attr('src', val);
+          imgEl2.attr('src', val);
+        });
+
+        const val = inputEl.val() || 'https://www.gstatic.com/rbmconsole/images/default_logo.png';
+        imgEl1.attr('src', val);
+        imgEl2.attr('src', val);
+      });
+    </script>
+  </head>
+  <body>
+    <div class="container">
+      <h1><%= title %></h1>
+      <div class="row">
+        <div class="col-8">
+          <% if (message) { %>
+            <div class="alert alert-danger" role="alert">
+              <%= message %>
+            </div>
+          <% } %>
+
+          <form action="<%= formUrl %>" method="post">
+            <div class="form-group">
+              <label>Agent Name</label>
+              <input class="form-control" required maxlength="40" value="<%= agent.displayName; %>" type="text" name="displayName">
+            </div>
+            <div class="form-group">
+              <label>Logo (1024x1024px PNG)</label>
+              <input class="form-control" id="url-input" required placeholder="http://" value="<%= agent.businessMessagesAgent.logoUrl; %>" type="text" name="logoUrl">
+            </div>
+
+            <div>
+              <img alt="" id="preview-1" class="large preview" src="https://www.gstatic.com/rbmconsole/images/default_logo.png">
+              <img alt="" id="preview-2" class="small preview" src="https://www.gstatic.com/rbmconsole/images/default_logo.png">
+            </div>
+
+            <div class="form-group">
+              <label>Custom Agent ID</label>
+              <input class="form-control" type="text" placeholder="" name="customAgentId" value="<%=  agent.businessMessagesAgent.customAgentId; %>">
+            </div>
+
+            <div class="row">
+              <div class="col-4">
+                <div class="form-group">
+                  <label>Default Locale:</label>
+                  <input class="form-control" type="text" required placeholder="Locale value (e.g. en)" name="defaultLocale" value="<%=  agent.businessMessagesAgent.defaultLocale; %>">
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="form-group">
+                  <div>&nbsp;</div>
+                  <a style="line-height: 55px;" href="https://tools.ietf.org/html/bcp47" target="_blank">IETF BCP 47 language tag</a>
+                </div>
+              </div>
+            </div>
+            <%
+              let first = true;
+              Object.keys(agent.businessMessagesAgent.conversationalSettings).forEach(function(key) { %>
+                <% if(first) { %>
+                  <p class="font-weight-bold">Conversation settings: <a href="#" id="locale-add">(add)</a></p>
+                  <div id="original-locale">
+                <% } %>
+                <%- include('../components/locales.ejs', {
+                      locale: key, settings: agent.businessMessagesAgent.conversationalSettings[key], showRemove: !first }); %>
+
+                <% if(first) { %>
+                  </div>
+                <% } %>
+                <% first = false; %>
+            <% }); %>
+
+            <div id="additional-locales"></div>
+
+            <p class="font-weight-bold">Primary agent interaction:</p>
+            <div class="form-group">
+              <label>Interaction type</label>
+              <select class="form-control" name="primaryAgentInteraction.interactionType">
+                <option value="BOT" <%= agent.businessMessagesAgent.primaryAgentInteraction.interactionType == 'BOT' ? 'selected': 'false' %>>BOT</option>
+                <option <%= agent.businessMessagesAgent.primaryAgentInteraction.interactionType == 'HUMAN' ? 'selected': 'false' %> value="HUMAN">HUMAN</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <p class="font-weight-bold">Availability:  <a href="#" id="availability-add">(add)</a></p>
+              <div id="original-availability">
+                <% if(agent.businessMessagesAgent.primaryAgentInteraction.botRepresentative != undefined) { 
+                    var botAvailability = agent.businessMessagesAgent.primaryAgentInteraction.botRepresentative.botMessagingAvailability;
+                    var hours = (typeof botAvailability.hours == 'undefined' ? templateHours : botAvailability.hours);
+                %>
+                <% for(var i = 0; i < hours.length; i++) { %>
+                    <%- include('../components/store_hours.ejs', {timezones: timezones,
+                      controlName: 'primary.availability', hour: hours[i], showRemove: i > 0}); %>
+                  <% } %>
+                <% } %>
+
+                <% if(agent.businessMessagesAgent.primaryAgentInteraction.humanRepresentative != undefined) { %>
+                  <% 
+                    var humanAvailability = agent.businessMessagesAgent.primaryAgentInteraction.humanRepresentative.humanMessagingAvailability;
+                    var hours = (typeof humanAvailability.hours == 'undefined' ? templateHours : humanAvailability.hours);
+                  %>
+
+                  <% for(var i = 0; i < hours.length; i++) { %>
+                    <%- include('../components/store_hours.ejs', {timezones: timezones,
+                      controlName: 'primary.availability', hour: hours[i], showRemove: i > 0}); %>
+                  <% } %>
+                <% } %>
+              </div>
+            </div>
+
+            <div id="additional-availability"></div>
+
+            <% if (agent.businessMessagesAgent.additionalAgentInteractions != undefined) { 
+                agentInteraction = agent.businessMessagesAgent.additionalAgentInteractions[0];
+            %>
+              <div id="additional-interactions">
+                <p class="font-weight-bold">Additional agent interaction: <a href="#" id="additional-interactions-remove">(remove)</a></p>
+                <div class="form-group">
+                  <label>Interaction type</label>
+                  <select class="form-control" name="additionalAgentInteraction.interactionType">
+                    <option value="BOT" <%= agentInteraction.interactionType == 'BOT' ? 'selected': 'false' %>>BOT</option>
+                    <option <%= agentInteraction.interactionType == 'HUMAN' ? 'selected': 'false' %> value="HUMAN">HUMAN</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <p class="font-weight-bold">Availability:</p>
+                  <% if(agentInteraction.botRepresentative != undefined) { 
+                      var botAvailability = agentInteraction.botRepresentative.botMessagingAvailability;
+                      var hours = (typeof botAvailability.hours == 'undefined' ? templateHours : botAvailability.hours);
+                  %>
+
+                    <% for(var i = 0; i < hours.length; i++) { %>
+                      <%- include('../components/store_hours.ejs', {timezones: timezones,
+                        controlName: 'additional.availability', hour: hours[i], showRemove: false}); %>
+                    <% } %>
+                  <% } %>
+
+                  <% if(agentInteraction.humanRepresentative != undefined) { %>
+                    <% hours = agentInteraction.humanRepresentative.humanMessagingAvailability.hours; %>
+                    <% 
+                      var humanAvailability = agentInteraction.humanRepresentative.humanMessagingAvailability;
+                      var hours = (typeof humanAvailability.hours == 'undefined' ? templateHours : humanAvailability.hours);
+                    %>
+
+                    <% for(var i = 0; i < hours.length; i++) { %>
+                      <%- include('../components/store_hours.ejs', {timezones: timezones,
+                        controlName: 'additional.availability', hour: hours[i], showRemove: false}); %>
+                    <% } %>
+                  <% } %>
+                </div>
+              </div>
+            <% } %>
+
+            <% if(isEdit) { %>
+              <p class="font-weight-bold">Test settings:</p>
+              <% if(agent.businessMessagesAgent.testUrls != undefined) { 
+                let testUrls = agent.businessMessagesAgent.testUrls;
+        
+                for(var i = 0; i < testUrls.length; i++) { %>
+                  <div class="form-group">
+                    <label><%= testUrls[i].surface %></label>
+                    <input class="form-control" readonly value="<%= testUrls[i].url %>" type="text" name="">
+                  </div>
+                <% } %>
+              <% } %>
+            <% } %>
+
+            <button type="submit" class="btn btn-primary">Submit</button>
+          </form>
+
+          <p class="mt-3"><a href="/agents?brandId=<%= brandId %>">← Back to agents</a></p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>List of Agents</title>
+    <%- include("../header.ejs"); %>
+  </head>
+  <body>
+    <div class="container">
+      <h1>List of Agents</h1>
+
+      <%
+        var rows = (agents != undefined ? agents.length : 0);
+      %>
+
+      <div class="row mb-2">
+        <div class="col">
+          <a href="/">← Back to brands</a>
+        </div>
+        <div class="col text-right">
+          <a href="/agents/create?brandId=<%= brandId %>">+ Create agent</a>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col">
+          <table width="100%" border="1" cellpadding="10">
+            <% if (rows == 0) { %>
+              <tr><td>No agents registered for the brand.</td></tr>
+            <% } else { %>
+              <tr>
+                <th>ID</th>
+                <th>Agent Name</th>
+              </tr>
+
+              <% for (var i = 0; i < rows; i++) { %>
+                <tr>
+                  <td>
+                    <a href="/agents/edit?agentId=<%= encodeURI(agents[i].name) %>&brandId=<%= brandId %>">
+                      <%= agents[i].name.substr(agents[i].name.lastIndexOf('/') + 1); %>
+                    </a>
+                  </td>
+                  <td><%= agents[i].displayName; %></td>
+                </tr>
+              <% } %>
+            <% } %>
+          </table>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

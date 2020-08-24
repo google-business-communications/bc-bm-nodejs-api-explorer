@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>List of Brands</title>
+    <%- include('../header.ejs'); %>
+  </head>
+  <body>
+    <div class="container">
+      <h1>List of Brands</h1>
+
+      <%
+        var rows = brands != undefined ? brands.length : 0;
+      %>
+
+      <div class="row mb-2">
+        <div class="col text-right">
+          <a href="/create">+ Create brand</a>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col">
+          <table width="100%" border="1" cellpadding="10">
+            <% if (rows == 0) { %>
+              <tr><td>No brands registered.</td></tr>
+            <% } else { %>
+              <tr>
+                <th>ID</th>
+                <th>Brand Name</th>
+                <th>&nbsp;</th>
+              </tr>
+
+              <% for (var i = 0; i < rows; i++) { %>
+                <tr>
+                  <td>
+                    <a href="/edit?brandId=<%= encodeURI(brands[i].name); %>"><%= brands[i].name.substr(brands[i].name.lastIndexOf('/') + 1); %>
+                  </td>
+                  <td><%= brands[i].displayName; %></td>
+                  <td class="text-center"><a href="/agents?brandId=<%= encodeURI(brands[i].name); %>">See Agents</a> / <a href="/locations?brandId=<%= encodeURI(brands[i].name); %>">See Locations</a></td>
+                </tr>
+              <% } %>
+            <% } %>
+          </table>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
