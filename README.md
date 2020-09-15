@@ -54,7 +54,7 @@ Register with Business Messages:
 
     6. Click **Done**.
 
-    7. Copy the JSON credentials file into this sample's /src/main/resources
+    7. Copy the JSON credentials file into this sample's /resources
     folder and rename it to "bc-agent-service-account-credentials.json".
 
 
