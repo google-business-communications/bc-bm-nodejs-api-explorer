@@ -1,0 +1,49 @@
+<p class="font-weight-bold">Non-local configuration:</p>
+<div class="form-group">
+
+   <div class="form-group">
+    <label>Method of contact (other means to contact the business)</label>
+    <select class="form-control" name="nonLocalConfig.contactOption.option">
+      <option <%= agent.businessMessagesAgent.nonLocalConfig.contactOption.options[0] == 'WEB_CHAT' ? 'selected': 'false' %> value="WEB_CHAT">Web chat</option>
+      <option <%= agent.businessMessagesAgent.nonLocalConfig.contactOption.options[0] == 'PHONE' ? 'selected': 'false' %> value="PHONE">Phone</option>
+      <option <%= agent.businessMessagesAgent.nonLocalConfig.contactOption.options[0] == 'EMAIL' ? 'selected': 'false' %> value="EMAIL">Email</option>
+      <option <%= agent.businessMessagesAgent.nonLocalConfig.contactOption.options[0] == 'FAQS' ? 'selected': 'false' %> value="FAQS">FAQs</option>
+      <option <%= agent.businessMessagesAgent.nonLocalConfig.contactOption.options[0] == 'TWITTER' ? 'selected': 'false' %> value="TWITTER">Twitter</option>
+      <option <%= agent.businessMessagesAgent.nonLocalConfig.contactOption.options[0] == 'WHATSAPP' ? 'selected': 'false' %> value="WHATSAPP">Whatsapp</option>
+    </select>
+  </div>
+ 
+  <div class="form-group">
+    <label>Contact URL (where the method of contact exists)</label>
+    <input class="form-control" type="text" value="<%= agent.businessMessagesAgent.nonLocalConfig.contactOption.url %>" required placeholder="https://" name="nonLocalConfig.contactOption.url" value="">
+  </div>
+ 
+</div>
+
+<div class="form-group">
+  <div class="form-group">
+    <label>Enabled domains (separate domains with commas)</label>
+    <textarea class="form-control" required placeholder="" name="nonLocalConfig.enabledDomains"><%= agent.businessMessagesAgent.nonLocalConfig.enabledDomains %></textarea>
+  </div>
+</div>
+
+<div class="form-group">
+  <div class="form-group">
+    <label>Phone number (overrides the phone field for conversations started from non-local entry points)</label>
+    <input class="form-control" required placeholder="+12223334444" value="<%= agent.businessMessagesAgent.nonLocalConfig.phoneNumber.number %>" name="nonLocalConfig.phoneNumber.number"></input>
+  </div>
+</div>
+
+<div class="form-group">
+  <div class="form-group">
+    <label>Call deflection phone numbers (separate phone numbers with commas)</label>
+    <textarea class="form-control" required placeholder="" name="nonLocalConfig.callDeflectionPhoneNumbers"><%= agent.businessMessagesAgent.nonLocalConfig.callDeflectionPhoneNumbers %></textarea>
+  </div>
+</div>
+
+<div class="form-group">
+  <div class="form-group">
+    <label><a href="https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry" target="blank">CLDR region codes</a> for countries you want to launch this agent (separate regions with commas)</label>
+    <textarea class="form-control" required placeholder="" name="nonLocalConfig.regionCodes"><%= agent.businessMessagesAgent.nonLocalConfig.regionCodes %></textarea>
+  </div>
+</div>

@@ -45,6 +45,30 @@
           $("#additional-locales").append($el1);
         });
 
+        $('#request-verification').click(function(e) {
+          e.preventDefault();
+
+          $('#verify-dialog').modal();
+        });
+
+        $('#verification-request-btn').click(function(e) {
+          e.preventDefault();
+
+          $('#verification-request-form').submit();
+        });
+
+        $('#cancel-verification').click(function(e) {
+          e.preventDefault();
+
+          $('#delete-confirmation-dialog').modal();
+        });
+
+        $('#request-launch').click(function(e) {
+          e.preventDefault();
+
+          $('#launch-confirmation-dialog').modal();
+        });
+
         const inputEl = $('#url-input');
         const imgEl1 = $('#preview-1');
         const imgEl2 = $('#preview-2');
@@ -66,7 +90,7 @@
     <div class="container">
       <h1><%= title %></h1>
       <div class="row">
-        <div class="col-8">
+        <div class="col-10">
           <% if (message) { %>
             <div class="alert alert-danger" role="alert">
               <%= message %>
@@ -205,6 +229,9 @@
               </div>
             <% } %>
 
+            <%- include('../components/non_local_config.ejs', {
+                      agent: agent }); %>
+
             <% if(isEdit) { %>
               <p class="font-weight-bold">Test settings:</p>
               <% if(agent.businessMessagesAgent.testUrls != undefined) { 
@@ -219,12 +246,108 @@
               <% } %>
             <% } %>
 
-            <button type="submit" class="btn btn-primary">Submit</button>
+            <div class="row">
+              <div class="col-3">
+                <button type="submit" class="btn btn-primary">Submit</button>
+              </div>
+              <% if(isEdit) { %>
+                <div class="col-9 float-right text-right" style="line-height: 42px;">
+                  <% if(agent.verificationLaunchState == 'VERIFICATION_STATE_PENDING') { %>
+                    <span style="font-size: 1rem" class="badge badge-warning">Pending Verification</span> | <a href="#" id="cancel-verification">Cancel</a>
+                  <% } else if (agent.verificationLaunchState == 'VERIFICATION_STATE_UNVERIFIED') { %>
+                    <span style="font-size: 1rem" class="badge badge-danger">Unverified</span> | <a href="#" id="request-verification">Request Verification</a>
+                  <% } else if (agent.verificationLaunchState == 'VERIFICATION_STATE_VERIFIED'
+                        || agent.verificationLaunchState == 'LAUNCH_STATE_UNLAUNCHED') { %>
+                    <span style="font-size: 1rem" class="badge badge-success">Verified</span>  | <a href="#" id="request-launch">Request Launch</a>
+                  <% } else if (agent.verificationLaunchState == 'LAUNCH_STATE_PENDING') { %>
+                    <span style="font-size: 1rem" class="badge badge-warning">Pending Launch</span>
+                  <% } else if (agent.verificationLaunchState == 'LAUNCH_STATE_REJECTED') { %>
+                    <span style="font-size: 1rem" class="badge badge-danger">Launch rejected</span>
+                  <% } else if (agent.verificationLaunchState == 'LAUNCH_STATE_LAUNCHED') { %>
+                    <span style="font-size: 1rem" class="badge badge-success">Launched</span>
+                  <% } %>
+                </div>
+              <% } %>
+            </div>
           </form>
 
           <p class="mt-3"><a href="/agents?brandId=<%= brandId %>">← Back to agents</a></p>
         </div>
       </div>
     </div>
+
+    <% if(isEdit) { %>
+      <div class="modal" tabindex="-1" id="verify-dialog" role="dialog">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Verification request</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <form id="verification-request-form" method="post" action="/agents/verify?agentId=<%= agent.name %>&brandId=<%= brandId %>">
+                <div class="form-group mt-3">
+                  <label>Your Company's Name</label>
+                  <input class="form-control" required value="" type="text" name="partnerName">
+                </div>
+                <div class="form-group mt-3">
+                  <label>Your Company's Email</label>
+                  <input class="form-control" required value="" type="text" name="partnerEmailAddress">
+                </div>
+                <div class="form-group mt-3">
+                  <label>Brand Contact Name</label>
+                  <input class="form-control" required value="" type="text" name="brandContactName">
+                </div>
+                <div class="form-group mt-3">
+                  <label>Brand Contact Email</label>
+                  <input class="form-control" required value="" type="text" name="brandContactEmailAddress">
+                </div>
+                <div class="form-group mt-3">
+                  <label>Brand Website Url</label>
+                  <input class="form-control" required value="" placeholder="http://" type="text" name="brandWebsiteUrl">
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+              <button type="button" id="verification-request-btn" class="btn btn-primary">Submit</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal fade" id="delete-confirmation-dialog" tabindex="-1" role="dialog"aria-hidden="true">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="exampleModalLabel">Verification Request Cancellation</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close"> <span aria-hidden="true">&times;</span> </button>
+            </div>
+            <div class="modal-body">Are you sure you want to cancel this request?</div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+              <a href="/agents/cancelVerification?agentId=<%= agent.name %>&brandId=<%= brandId %>" id="delete" class="btn btn-danger">Yes</a> </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal fade" id="launch-confirmation-dialog" tabindex="-1" role="dialog"aria-hidden="true">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">Launch Request</h5>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close"> <span aria-hidden="true">&times;</span> </button>
+            </div>
+            <div class="modal-body">Are you sure you want to launch this agent?</div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+              <a href="/agents/launch?brandId=<%= brandId %>&agentId=<%= agent.name %>" class="btn btn-danger">Yes</a> </div>
+          </div>
+        </div>
+      </div>
+
+      <% } %>
   </body>
 </html>

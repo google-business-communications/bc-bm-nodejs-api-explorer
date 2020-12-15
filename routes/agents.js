@@ -28,6 +28,26 @@ const TEMPLATE_HOURS = [{
   endDay: 'SUNDAY',
 }];
 
+const TEMPLATE_NON_LOCAL_CONFIG = { // Configuration options for launching on non-local entry points
+  // List of phone numbers for call deflection, values must be globally unique
+  callDeflectionPhoneNumbers: [
+    { number: '' },
+  ],
+  // Contact information for the agent that displays with the messaging button
+  contactOption: {
+    options: [
+      'WEB_CHAT'
+    ],
+    url: '',
+  },
+  // Domains enabled for messaging within Search, values must be globally unique
+  enabledDomains: [''],
+  // Agent's phone number. Overrides the `phone` field
+  // for conversations started from non-local entry points
+  phoneNumber: { number: '' },
+  regionCodes: ['US']
+};
+
 /**
  * Agent listing page.
  */
@@ -106,6 +126,7 @@ router.get('/create', function(req, res, next) {
           },
         },
       ],
+      nonLocalConfig: TEMPLATE_NON_LOCAL_CONFIG
     },
   };
 
@@ -143,11 +164,48 @@ router.get('/edit', function(req, res, next) {
     };
 
     // Get the agent details to show in the edit form
-    apiObject.bcApi.brands.agents.get(apiParams, {}, function(err, response) {
+    apiObject.bcApi.brands.agents.get(apiParams, {}, async function(err, response) {
       console.log(err);
       console.log(response);
 
       const agent = response.data;
+
+      if (agent.businessMessagesAgent.nonLocalConfig.enabledDomains === undefined) {
+        agent.businessMessagesAgent.nonLocalConfig = TEMPLATE_NON_LOCAL_CONFIG;
+      }
+
+      let domains = '';
+      if (agent.businessMessagesAgent.nonLocalConfig.enabledDomains !== undefined) {
+        for (let i = 0; i < agent.businessMessagesAgent.nonLocalConfig.enabledDomains.length; i++) {
+          if (i > 0) domains += ', ';
+
+          domains += agent.businessMessagesAgent.nonLocalConfig.enabledDomains[i];
+        }
+      }
+      agent.businessMessagesAgent.nonLocalConfig.enabledDomains = domains;
+
+      let phoneNumbers = '';
+      if (agent.businessMessagesAgent.nonLocalConfig.callDeflectionPhoneNumbers !== undefined) {
+        for (let i = 0; i < agent.businessMessagesAgent.nonLocalConfig.callDeflectionPhoneNumbers.length; i++) {
+          if (i > 0) phoneNumbers += ', ';
+
+          phoneNumbers += agent.businessMessagesAgent.nonLocalConfig.callDeflectionPhoneNumbers[i].number;
+        }
+      }
+      agent.businessMessagesAgent.nonLocalConfig.callDeflectionPhoneNumbers = phoneNumbers;
+
+      let regionCodes = '';
+      if (agent.businessMessagesAgent.nonLocalConfig.regionCodes !== undefined) {
+        for (let i = 0; i < agent.businessMessagesAgent.nonLocalConfig.regionCodes.length; i++) {
+          if (i > 0) regionCodes += ', ';
+
+          regionCodes += agent.businessMessagesAgent.nonLocalConfig.regionCodes[i];
+        }
+      }
+      agent.businessMessagesAgent.nonLocalConfig.regionCodes = regionCodes;
+
+      // Get the agent state
+      agent.verificationLaunchState = await getAgentState(agentId, apiObject);
 
       res.render('agents/edit', {
         agent: agent,
@@ -162,6 +220,157 @@ router.get('/edit', function(req, res, next) {
     });
   }).catch(function(err) {
     console.log(err);
+  });
+});
+
+/**
+ * Gets the verification state for the agent. If the agent is verified,
+ * the launch state is retrieved.
+ * {string} agentId The agent id to retrieve the state for.
+ * {object} apiObject The Business Messages client library object.
+ */
+async function getAgentState(agentId, apiObject) {
+  return new Promise((resolve, reject) => {
+    // setup the parameters for the API call
+    let apiParams = {
+      auth: apiObject.authClient,
+      name: agentId + '/verification',
+    };
+
+    apiObject.bcApi.brands.agents.getVerification(apiParams, {}, (err, response) => {
+      const agentVerification = response.data;
+
+      let agentState = 'VERIFICATION_STATE_UNVERIFIED';
+
+      if (agentVerification.verificationState !== undefined) {
+        agentState = agentVerification.verificationState;
+      }
+
+      if (agentState === 'VERIFICATION_STATE_VERIFIED') {
+        apiParams = {
+          auth: apiObject.authClient,
+          name: agentId + '/launch',
+        };
+
+        // Check the launch status
+        apiObject.bcApi.brands.agents.getLaunch(apiParams, {}, (err, response) => {
+          const agentLaunch = response.data;
+
+          if (agentLaunch.businessMessages.launchDetails !== undefined) {
+            if (agentLaunch.businessMessages.launchDetails.NON_LOCAL !== undefined) {
+              agentState = agentLaunch.businessMessages.launchDetails.NON_LOCAL.launchState;
+            }
+            else if (agentLaunch.businessMessages.launchDetails.LOCATION !== undefined) {
+              agentState = agentLaunch.businessMessages.launchDetails.LOCATION.launchState;
+            }
+          }
+
+          resolve(agentState);
+        });
+      }
+      else {
+        resolve(agentState);
+      }
+    });
+  });
+}
+
+/**
+ * Request agent verification.
+ */
+router.post('/verify', function(req, res, next) {
+  const agentId = req.query.agentId;
+  const brandId = req.query.brandId;
+
+  const formObject = req.body;
+
+  const agentVerificationContact = {
+    agentVerificationContact: {
+      partnerName: formObject.partnerName,
+      partnerEmailAddress: formObject.partnerEmailAddress,
+      brandContactName: formObject.brandContactName,
+      brandContactEmailAddress: formObject.brandContactEmailAddress,
+      brandWebsiteUrl: formObject.brandWebsiteUrl,
+    },
+  };
+
+  const apiConnector = apiHelper.init();
+  apiConnector.then((apiObject) => {
+    // setup the parameters for the API call
+    const apiParams = {
+      auth: apiObject.authClient,
+      name: agentId,
+      resource: agentVerificationContact,
+    };
+
+    apiObject.bcApi.brands.agents.requestVerification(apiParams, {}, (err, response) => {
+      if (err !== undefined && err !== null) {
+        handleError(res, err, brandId, agentId);
+      } else {
+        res.redirect('/agents/edit?brandId=' + brandId + '&agentId=' + agentId);
+      }
+    });
+  });
+});
+
+/**
+ * Request agent launch.
+ */
+router.get('/launch', function(req, res, next) {
+  const agentId = req.query.agentId;
+  const brandId = req.query.brandId;
+
+  // Get the agent first so we know what regions to launch with
+  const apiConnector = apiHelper.init();
+  apiConnector.then(function(apiObject) {
+    // setup the parameters for the API call
+    const apiParams = {
+      auth: apiObject.authClient,
+      name: agentId,
+    };
+
+    console.log(apiParams);
+
+    apiObject.bcApi.brands.agents.get(apiParams, {}, function(err, response) {
+      console.log(err);
+      console.log(response);
+
+      const agent = response.data;
+
+      const agentLaunch = {
+        agentLaunch: {
+          businessMessages: {
+            launchDetails: {
+              'NON_LOCAL': {
+                'entryPoint': 'NON_LOCAL',
+                'regionCodes': agent.businessMessagesAgent.nonLocalConfig.regionCodes,
+              },
+              'LOCATION': {
+                'entryPoint': 'LOCATION',
+              },
+            }
+          },
+        }
+      };
+
+      // setup the parameters for the API call
+      const apiParams = {
+        auth: apiObject.authClient,
+        name: agentId,
+        resource: agentLaunch,
+      };
+
+      apiObject.bcApi.brands.agents.requestLaunch(apiParams, {}, (err, response) => {
+        console.dir(err);
+        console.dir(response);
+
+        if (err !== undefined && err !== null) {
+          handleError(res, err, brandId, agentId);
+        } else {
+          res.redirect('/agents/edit?brandId=' + brandId + '&agentId=' + agentId);
+        }
+      });
+    });
   });
 });
 
@@ -187,7 +396,10 @@ router.post('/save', function(req, res, next) {
       conversationalSettings: { },
       entryPointConfigs: [
         {
-          allowedEntryPoint: 'LOCATION',
+          allowedEntryPoint: 'LOCATION'
+        },
+        {
+          allowedEntryPoint: 'NON_LOCAL'
         },
       ],
     },
@@ -236,6 +448,8 @@ router.post('/save', function(req, res, next) {
       getRepresentative(formObject,
           formObject['additionalAgentInteraction.interactionType'], 'additional');
   }
+
+  agentObject.businessMessagesAgent.nonLocalConfig = getNonLocalConfig(formObject);
 
   const apiConnector = apiHelper.init();
   apiConnector.then(function(apiObject) {
@@ -324,6 +538,43 @@ function handleError(res, error, brandId, agentId) {
   }
 
   res.redirect(url);
+}
+
+/**
+ * Parses the form key/value pairs into an object
+ * for the non local configuration of an agent.
+ *
+ * @param {object} formObject Key/value pairs from the HTML form.
+ * @return Non local configuration object.
+ */
+function getNonLocalConfig(formObject) {
+  let nonLocalConfig = {};
+
+  nonLocalConfig.phoneNumber = { number: formObject['nonLocalConfig.phoneNumber.number'] };
+  nonLocalConfig.contactOption = {
+    url: formObject['nonLocalConfig.contactOption.url'],
+    options: [ formObject['nonLocalConfig.contactOption.option'] ]
+  };
+
+  nonLocalConfig.enabledDomains = [];
+  let domains = formObject['nonLocalConfig.enabledDomains'].split(',');
+  for(let i = 0; i < domains.length; i++) {
+    nonLocalConfig.enabledDomains.push(domains[i].trim());
+  }
+
+  nonLocalConfig.callDeflectionPhoneNumbers = [];
+  let phoneNumbers = formObject['nonLocalConfig.callDeflectionPhoneNumbers'].split(',');
+  for(let i = 0; i < phoneNumbers.length; i++) {
+    nonLocalConfig.callDeflectionPhoneNumbers.push({ number: phoneNumbers[i].trim() });
+  }
+
+  nonLocalConfig.regionCodes = [];
+  let regionCodes = formObject['nonLocalConfig.regionCodes'].split(',');
+  for(let i = 0; i < regionCodes.length; i++) {
+    nonLocalConfig.regionCodes.push(regionCodes[i].trim());
+  }
+
+  return nonLocalConfig;
 }
 
 /**
